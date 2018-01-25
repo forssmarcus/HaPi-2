@@ -1,10 +1,10 @@
 // Vielä tekemättä:
-// -aloitusnäkymä
+// -aloitusnäkymä (laitoin tähänkin nyt jonkun vähän eri)
 // -zoomaus vääristää
-// -Kysely-threadien tappaminen
+// -Kysely-threadien tappaminen (Ei ehkä tarvii tappaa? Suoritus loppuu itsestään kun tulee tehtyä?)
 // -kommentointia ehkä lisättävä, vähintään käytävä läpi että on ok
 // -toiseksi viimeisen pallukan juttuja voi miettiä että tuliko tehtyä järkevästi
-// -Muuten tämä varmaan tulikin valmiiksi yllättäen?!?
+// -Muuten tämä varmaan tulikin valmiiksi?
 
 
 // Kartankatseluohjelman graafinen käyttöliittymä
@@ -60,9 +60,8 @@
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
      
-        // ALLA OLEVAN TESTIRIVIN VOI KORVATA JOLLAKIN MUULLA ERI ALOITUSNÄKYMÄN
-        // LATAAVALLA RIVILLÄ
-        imageLabel.setIcon(new ImageIcon(new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&BBOX=-180,-90,180,90&SRS=EPSG:4326&WIDTH=953&HEIGHT=480&LAYERS=bluemarble,cities&STYLES=&FORMAT=image/png&TRANSPARENT=true")));
+        // Aloitusnäkymä
+        imageLabel.setIcon(new ImageIcon(new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&BBOX=-180,-90,180,90&SRS=EPSG:4326&WIDTH=953&HEIGHT=480&LAYERS=continents,country_bounds&STYLES=&FORMAT=image/png&TRANSPARENT=true")));
      
         add(imageLabel, BorderLayout.EAST);
      
@@ -121,8 +120,6 @@
      
         pack();
         setVisible(true);
-        
-        updateImage();
       } // Konstruktori
      
       public static void main(String[] args) throws Exception {
@@ -137,7 +134,6 @@
       }
       
       // Kontrollinappien kuuntelija
-      // KAIKKIEN NAPPIEN YHTEYDESSÄ VOINEE HYÖDYNTÄÄ updateImage()-METODIA
       private class ButtonListener implements ActionListener{
         public void actionPerformed(ActionEvent e) {
           // Päivitä
@@ -242,7 +238,7 @@
         public Kysely(int[] rajat){  
           this.rajat = rajat;
         }
-        
+        // Jokainen kysely luodaan ja tehdään omassa threadissaan:
         public void run(){
           alku = "http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&";
           rajatString = "BBOX="; // + xmin + "," + ymin + "," + xmax + "," + ymax
