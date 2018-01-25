@@ -1,14 +1,12 @@
-// Viel‰ tekem‰tt‰:
-// -aloitusn‰kym‰ (laitoin t‰h‰nkin nyt jonkun v‰h‰n eri)
-// -zoomaus v‰‰rist‰‰
-// -Kysely-threadien tappaminen (Ei ehk‰ tarvii tappaa? Suoritus loppuu itsest‰‰n kun tulee tehty‰?)
-// -kommentointia ehk‰ lis‰tt‰v‰, v‰hint‰‰n k‰yt‰v‰ l‰pi ett‰ on ok
-// -toiseksi viimeisen pallukan juttuja voi mietti‰ ett‰ tuliko tehty‰ j‰rkev‰sti
-// -Muuten t‰m‰ varmaan tulikin valmiiksi?
+// Viel√§ tekem√§tt√§:
+// -aloitusn√§kym√§ (laitoin t√§h√§nkin nyt jonkun v√§h√§n eri)
+// -Kysely-threadien tappaminen (Ei ehk√§ tarvii tappaa? Suoritus loppuu itsest√§√§n kun tulee tehty√§?)
+// -kommentointia ehk√§ lis√§tt√§v√§, v√§hint√§√§n k√§yt√§v√§ l√§pi ett√§ on ok
+// -toiseksi viimeisen pallukan juttuja voi mietti√§ ett√§ tuliko tehty√§ j√§rkev√§sti
+// -Muuten t√§m√§ varmaan tulikin valmiiksi?
 
-
-// Kartankatseluohjelman graafinen k‰yttˆliittym‰
-     
+    import java.lang.Math;
+// Kartankatseluohjelman graafinen k√§ytt√∂liittym√§
     import javax.swing.*;
     import javax.swing.event.*;
     import java.awt.*;
@@ -16,51 +14,47 @@
     import java.net.*;
     
     // XML-jutut
-    
     import javax.xml.parsers.*;
     import org.xml.sax.*;
     import org.xml.sax.helpers.*;
-    
     import java.util.*;
     import java.io.*;
 
      
-    public class MapDialog extends JFrame {
+    public class MapDialog extends JFrame { 
       
-      //N‰ihin ker‰t‰‰n karttakerrosten nimet ja titlet XML-tiedostosta
+      //N√§ihin ker√§t√§√§n karttakerrosten nimet ja titlet XML-tiedostosta
       ArrayList<String> layerNames;
       ArrayList<String> layerTitles;
       
-      // getMap-kyselyn numeroparametrit j‰rjestyksess‰ xmin, ymin, xmax, ymax, leveys, korkeus. Ei ehk‰ loogisin 
-      // paikka t‰lle mutta on monen sis‰luokan k‰ytˆss‰ niin helpompaa n‰in. Oletusn‰kym‰n luvut.
+      // getMap-kyselyn numeroparametrit j√§rjestyksess√§ xmin, ymin, xmax, ymax, leveys, korkeus. Ei ehk√§ loogisin 
+      // paikka t√§lle mutta on monen sis√§luokan k√§yt√∂ss√§ niin helpompaa n√§in. Oletusn√§kym√§n luvut.
       int[] rajat = {-180,-90,180,90, 953, 480};
       
-      // K‰yttˆliittym‰n komponentit
-      
+      // K√§ytt√∂liittym√§n komponentit
       private JLabel imageLabel = new JLabel();
       private JPanel leftPanel = new JPanel();
-      
-      private JButton refreshB = new JButton("P‰ivit‰");
+      private JButton refreshB = new JButton("P√§ivit√§");
       private JButton leftB = new JButton("<");
       private JButton rightB = new JButton(">");
       private JButton upB = new JButton("^");
       private JButton downB = new JButton("v");
-      private JButton zoomInB = new JButton("+");
-      private JButton zoomOutB = new JButton("-");
+      private JButton zoomInB = new JButton("+10%");
+      private JButton zoomOutB = new JButton("-10%");
+      private JButton nollaa = new JButton("nollaa");   // lis√§sin
       
-      // Konstruktori
+      // ----------------------------------------------------------------------Konstruktori MapDialog()
       public MapDialog() throws Exception {
         
-        // Alustetaan ArrayListit joihin karttakerrosten nimet ja titlet ker‰t‰‰n
+        // Alustetaan ArrayListit joihin karttakerrosten nimet ja titlet ker√§t√§√§n
         layerNames = new ArrayList<String>();
         layerTitles = new ArrayList<String>();
         
-        // Valmistele ikkuna ja lis‰‰ siihen komponentit
-     
+        // Valmistele ikkuna ja lis√§√§ siihen komponentit
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
      
-        // Aloitusn‰kym‰
+        // Aloitusn√§kym√§
         imageLabel.setIcon(new ImageIcon(new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&BBOX=-180,-90,180,90&SRS=EPSG:4326&WIDTH=953&HEIGHT=480&LAYERS=continents,country_bounds&STYLES=&FORMAT=image/png&TRANSPARENT=true")));
      
         add(imageLabel, BorderLayout.EAST);
@@ -73,6 +67,7 @@
         downB.addActionListener(bl);
         zoomInB.addActionListener(bl);
         zoomOutB.addActionListener(bl);
+        nollaa.addActionListener(bl);
      
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -82,12 +77,12 @@
         // getCapabilities-kyselyn URL
         URL contentsURL = new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities");
         
-        // Luodaan XML:n k‰sittelemiseen tarvittavat oliot
+        // Luodaan XML:n k√§sittelemiseen tarvittavat oliot
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser saxParser = factory.newSAXParser();
         UserHandler userHandler = new UserHandler(layerNames, layerTitles);
         
-        // Haetaan ja k‰yd‰‰n XML-tiedosto l‰pi, poimitaan halutut tiedot (tapahtuu oikeastaan UserHandlerissa)
+        // Haetaan ja k√§yd√§√§n XML-tiedosto l√§pi, poimitaan halutut tiedot (tapahtuu oikeastaan UserHandlerissa)
         try {
           saxParser.parse(contentsURL.openStream(), userHandler);
         } catch (Exception e){
@@ -102,7 +97,7 @@
           System.out.println(title);
         }
         
-        // Luodaan k‰yttˆliittym‰‰n CheckBox-oliot kutakin karttakerrosta varten:
+        // Luodaan k√§ytt√∂liittym√§√§n CheckBox-oliot kutakin karttakerrosta varten:
         for (int i = 0; i<layerNames.size(); i++){
           leftPanel.add(new LayerCheckBox(layerNames.get(i), layerTitles.get(i), false));
         }
@@ -115,28 +110,35 @@
         leftPanel.add(downB);
         leftPanel.add(zoomInB);
         leftPanel.add(zoomOutB);
+        leftPanel.add(nollaa);
      
         add(leftPanel, BorderLayout.WEST);
      
         pack();
         setVisible(true);
-      } // Konstruktori
+      } // Konstruktori MapDialog()
      
+      
+      // -------------------------------------------------------------------------main
       public static void main(String[] args) throws Exception {
         new MapDialog();
       } // main
       
-     
-      // Luodaan uusi kysely ja k‰ynnistet‰‰n se omana threadinaan
+      // -------------------------------------------------------------------------updateImage()
+      // Luodaan uusi kysely ja k√§ynnistet√§√§n se omana threadinaan
       public void updateImage() throws Exception {
         Kysely kysely = new Kysely(rajat);
         kysely.start();
       }
       
+      
+      
+      
+      // ------------------------------------------------------------------------ ButtonListener
       // Kontrollinappien kuuntelija
       private class ButtonListener implements ActionListener{
         public void actionPerformed(ActionEvent e) {
-          // P‰ivit‰
+          // P√§ivit√§
           if(e.getSource() == refreshB) {
             try{
               updateImage();
@@ -164,7 +166,7 @@
               ex.printStackTrace();
             }
           }
-          // Ylˆs
+          // Yl√∂s
           if(e.getSource() == upB) {
             rajat[1] = rajat[1]+9;
             rajat[3] = rajat[3]+9;
@@ -184,48 +186,64 @@
               ex.printStackTrace();
             }
           }
-          // L‰hemm‰s
-          if(e.getSource() == zoomInB) {
-            rajat[4] = rajat[4]+10;
-            rajat[5] = rajat[5]+5;
+          // L√§hemm√§s 10%
+          if(e.getSource() == zoomInB) {  
+            // Kartan koko pysyy samana, joten rajat[4] ja rajat[5] vakiona
+            // Milt√§ v√§lilt√§ kuva n√§ytet√§√§n: 
+            rajat[0] = (int) (rajat[0] * 0.90);
+            rajat[1] = (int) (rajat[1] * 0.90);
+            rajat[2] = (int) (rajat[2] * 0.90);
+            rajat[3] = (int) (rajat[3] * 0.90);
             
-            rajat[0] = rajat[0]+18;
-            rajat[1] = rajat[1]+9;
-            rajat[2] = rajat[2]-9;
-            rajat[3] = rajat[3]-18;
             try{
               updateImage();
             } catch(Exception ex){
               ex.printStackTrace();
             }
           }
-          // Kauemmas
+          // Kauemmas 10%
           if(e.getSource() == zoomOutB) {
-            rajat[4] = rajat[4]-10;
-            rajat[5] = rajat[5]-5;
-            
-            rajat[0] = rajat[0]-18;
-            rajat[1] = rajat[1]-9;
-            rajat[2] = rajat[2]+18;
-            rajat[3] = rajat[3]+9;
+            rajat[0] = (int) (rajat[0] * 1.10);
+            rajat[1] = (int) (rajat[1] * 1.10);
+            rajat[2] = (int) (rajat[2] * 1.10);
+            rajat[3] = (int) (rajat[3] * 1.10);
+
             try{
               updateImage();
             } catch(Exception ex){
               ex.printStackTrace();
             }
           }
-        }
-      }
+          
+         //Kartan sovitus ja keskitys alkuper√§iseen asemaan.
+          if(e.getSource() == nollaa) {
+            rajat[4] = 953;
+            rajat[5] = 480;
+            rajat[0] = -180;
+            rajat[1] = -90;
+            rajat[2] = 180;
+            rajat[3] = 90;
+            try{
+              updateImage();
+            } catch(Exception ex){
+              ex.printStackTrace();
+            }
+          }
+        }// actionPerformed
+      }// ButtonListener
       
-      // Sis‰luokka, joka omassa threadissaan muodostaa getMap()-kyselyn URL-osoitteen ja saatuaan kuvan p‰ivitt‰‰ kuvan
+     
+      // -------------------------------------------------------------------------- Kysely 
+      // Sis√§luokka, joka omassa threadissaan muodostaa getMap()-kyselyn 
+      // URL-osoitteen ja saatuaan kuvan p√§ivitt√§√§ kuvan
       private class Kysely extends Thread{
-        // T‰h‰n tallennetaan parametrina saatu viittaus taulukkoon josta lˆytyv‰t lukuparametrit
+        // T√§h√§n tallennetaan parametrina saatu viittaus taulukkoon josta l√∂ytyv√§t lukuparametrit
         int[] rajat;
 
-        // T‰h‰n Stringiin kootaan osista lopullinen kysely  
+        // T√§h√§n Stringiin kootaan osista lopullinen kysely  
         String getMap;
         
-        // N‰ist‰ p‰tkist‰ kootaan konstruktorissa kysely
+        // N√§ist√§ p√§tkist√§ kootaan konstruktorissa kysely
         String alku;
         String rajatString;
         String keskiosa;
@@ -238,7 +256,9 @@
         public Kysely(int[] rajat){  
           this.rajat = rajat;
         }
-        // Jokainen kysely luodaan ja tehd‰‰n omassa threadissaan:
+        
+        // ------------------------------------------------------------------------ run()
+        // Jokainen kysely luodaan ja tehd√§√§n omassa threadissaan:
         public void run(){
           alku = "http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&";
           rajatString = "BBOX="; // + xmin + "," + ymin + "," + xmax + "," + ymax
@@ -248,7 +268,7 @@
           layersString = "&LAYERS=";
           loppu = "&STYLES=&FORMAT=image/png&TRANSPARENT=true";
           
-          // Lis‰t‰‰n tekstin joukkoon rajat
+          // Lis√§t√§√§n tekstin joukkoon rajat
           for (int i = 0; i<rajat.length-2; i++){
             rajatString = rajatString + rajat[i];
             if (i<rajat.length-3){
@@ -256,9 +276,9 @@
             }
           }
           
-          // Tutkitaan, mitk‰ valintalaatikot on valittu, ja
-          // ker‰t‰‰n layersString:iin pilkulla erotettu lista valittujen kerrosten
-          // nimist‰ (k‰ytet‰‰n haettaessa uutta kuvaa)
+          // Tutkitaan, mitk√§ valintalaatikot on valittu, ja
+          // ker√§t√§√§n layersString:iin pilkulla erotettu lista valittujen kerrosten
+          // nimist√§ (k√§ytet√§√§n haettaessa uutta kuvaa)
           Component[] components = leftPanel.getComponents();
           for(Component com:components) {
             if(com instanceof LayerCheckBox)
@@ -266,19 +286,19 @@
           }
           if (layersString.endsWith(",")) layersString = layersString.substring(0, layersString.length() - 1);
           
-          // Kootaan kysely ja lis‰t‰‰n v‰liin loput luvut
+          // Kootaan kysely ja lis√§t√§√§n v√§liin loput luvut
           getMap = alku + rajatString + keskiosa + leveysString + rajat[4] + korkeusString + rajat[5] + layersString + loppu;
           
           // Testitulostus
-          System.out.println(getMap + " - T‰m‰ tulostuu Kyselyn run()-metodista");
+          System.out.println(getMap + " - T√§m√§ tulostuu Kyselyn run()-metodista");
           
-          // Tehd‰‰n kysely ja p‰ivitet‰‰n kuva
+          // Tehd√§√§n kysely ja p√§ivitet√§√§n kuva
           try{
           imageLabel.setIcon(new ImageIcon(new URL (getMap)));
           } catch (Exception e){
             System.out.println(e.getMessage());
           }
-        }
+        }//run
         
       } // Kysely
       
@@ -290,10 +310,11 @@
           this.name = name;
         }
         public String getName() { return name; }
-      } // LayerCheckBox
+      } 
       
-      // Oma handleriluokka, joka osaa poimia k‰sittelem‰st‰‰n (juuri oikeanlaisesta) XML-tiedostosta karttakerrosten
-      // nimet ja titlet. Saa parametrina viittaukset MapDialogin Arraylisteihin, joihin lis‰‰ ker‰‰m‰ns‰ Stringit.
+      
+      // Oma handleriluokka, joka osaa poimia k√§sittelem√§st√§√§n (juuri oikeanlaisesta) XML-tiedostosta karttakerrosten
+      // nimet ja titlet. Saa parametrina viittaukset MapDialogin Arraylisteihin, joihin lis√§√§ ker√§√§m√§ns√§ Stringit.
       private class UserHandler extends DefaultHandler{
         
         int layers = 0;
@@ -304,7 +325,8 @@
         ArrayList<String> names;
         ArrayList<String> titles;
         
-        // KONSTRUKTORI - Saa viittaukset MapDialogin Arraylisteihin (siell‰ layerNames ja layerTitles, t‰‰ll‰ names ja titles)
+        // KONSTRUKTORI - Saa viittaukset MapDialogin Arraylisteihin (siell√§ layerNames ja 
+        // layerTitles, t√§√§ll√§ names ja titles)
         public UserHandler (ArrayList<String> names, ArrayList<String> titles){
           capability = false;
           layer = false;
@@ -314,8 +336,11 @@
           this.titles = titles;
         }
         
-        // Kohdatessaan elementin XML-tiedostossa parser kutsuu t‰t‰ metodia. Mik‰li elementti t‰ytt‰‰ ehdon, vaihdetaan
-        // booleanin arvoa. N‰ill‰ valikoidaan mitk‰ nimet poimitaan ja lis‰t‰‰n Arraylisteihin.
+        // ---------------------------------------------------------------------- startElement()
+        // Kohdatessaan elementin XML-tiedostossa parser kutsuu t√§t√§ metodia. 
+        // Mik√§li elementti t√§ytt√§√§ ehdon, vaihdetaan
+        // booleanin arvoa. N√§ill√§ valikoidaan mitk√§ nimet poimitaan 
+        // ja lis√§t√§√§n Arraylisteihin.
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException{
           if (qName.equalsIgnoreCase("capability")){
@@ -335,7 +360,9 @@
           }
         }
         
-        // Kun elementti saatu k‰sitelty‰, parser kutsuu t‰t‰. Muutetaan booleaneja falseksi, jotta v‰‰ri‰ kohtia ei lis‰t‰ Arraylisteihin.
+        // --------------------------------------------------------------------- endElement()
+        // Kun elementti saatu k√§sitelty√§, parser kutsuu t√§t√§. Muutetaan 
+        // booleaneja falseksi, jotta v√§√§ri√§ kohtia ei lis√§t√§ Arraylisteihin.
         @Override
         public void endElement (String uri, String localName, String qName) throws SAXException {
           if (qName.equalsIgnoreCase("layer")) {
@@ -347,8 +374,10 @@
           }
         }
         
-        // Kun parser kohtaa teksti‰, kutsuu t‰t‰. Mik‰li ehdot (yll‰olevat metodit s‰‰telev‰t booleanien avulla) t‰yttyv‰t,
-        // lis‰t‰‰n tekstin p‰tk‰ Arraylistiin.
+        // -------------------------------------------------------------------- characters()
+        // Kun parser kohtaa teksti√§, kutsuu t√§t√§. Mik√§li ehdot (yll√§olevat 
+        // metodit s√§√§telev√§t booleanien avulla) t√§yttyv√§t, lis√§t√§√§n tekstin 
+        // p√§tk√§ Arraylistiin.
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
           if (capability && layer && name){
